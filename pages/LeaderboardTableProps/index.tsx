@@ -13,21 +13,23 @@ export interface LeaderboardTableProps {
   data: RaceEntry[]; // Union type to allow either RaceEntry or RaceRank data
   config: LeaderboardConfig;
   title: string;
+  currentId: string
 }
 
 const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
   data,
   config,
   title,
+  currentId,
 }) => {
   const { columns } = config;
 
   return (
     <div className={homeStyles.tableAlign}>
-      <h2 className="fixed mb-4 text-2xl font-extrabold leading-none tracking-tight text-gray-900 dark:text-white">
+      <h2 className="mb-4 text-xl font-extrabold leading-none tracking-tight text-gray-900 dark:text-white">
         {title}
       </h2>
-      <div className="mt-10">
+      <div className="">
         <table className="shadow-lg bg-white">
           <thead>
             <tr>
