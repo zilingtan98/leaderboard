@@ -13,14 +13,12 @@ export interface LeaderboardTableProps {
   data: RaceEntry[]; // Union type to allow either RaceEntry or RaceRank data
   config: LeaderboardConfig;
   title: string;
-  currentId: string
 }
 
 const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
   data,
   config,
   title,
-  currentId,
 }) => {
   const { columns } = config;
 
@@ -30,7 +28,7 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
         {title}
       </h2>
       <div className="">
-        <table className="shadow-lg bg-white">
+        <table className="shadow-lg bg-white table-auto">
           <thead>
             <tr>
               {columns.map((column) => (
@@ -54,9 +52,9 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
             </tr>
           ))}
         </tbody> */}
-          <tbody>
+          {/* <tbody>
             {data.map((entry, index) => (
-              <tr key={index}>
+              <tr key={index} className={homeStyles.row}>
                 {columns.map((column) => (
                   <td className="border px-8 py-4" key={column}>
                     {entry[column]}
@@ -64,6 +62,18 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
                 ))}
               </tr>
             ))}
+          </tbody> */}
+          <tbody>
+            {data &&
+              data.map((entry, index) => (
+                <tr key={index} className={homeStyles.row}>
+                  {columns.map((column) => (
+                    <td className="border px-8 py-4" key={column}>
+                      {entry[column]}
+                    </td>
+                  ))}
+                </tr>
+              ))}
           </tbody>
         </table>
       </div>

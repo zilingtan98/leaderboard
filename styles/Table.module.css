@@ -19,8 +19,24 @@
 
 .tableAlign{
     margin-bottom: 20px;
-    margin-block-end: 4rem;
+    margin-block-end: 2rem;
     max-width: 1300px;
     overflow: auto;
  
 }
+/* Table.module.css */
+
+/* Table.module.css */
+
+.row:nth-child(-n+3) {
+    background-color: rgb(216, 218, 193);
+  }
+  
+  .row:nth-child(n+4):nth-child(-n+6) {
+    background-color: rgb(143, 177, 143);
+  }
+  
+  .row:nth-child(n+7):nth-child(-n+9) {
+    background-color: rgb(148, 176, 189);
+  }
+  

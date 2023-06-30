@@ -6,12 +6,11 @@ import LeaderboardTable, {
 
 import homeStyles from "@/styles/Table.module.css";
 
-// const config: LeaderboardConfig = {
-//   columns: ["Name"],
-// };
+interface GroupedData {
+  [key: string]: any[];
+}
 const tableCount = 3; // Number of tables
 const names = ["Alice", "Bob", "John"]; // Names for each entry
-
 const data: RaceEntry[] = [];
 let idCounter = 1;
 for (let i = 1; i <= tableCount; i++) {
@@ -28,6 +27,7 @@ export default function Home() {
   const [config, setConfig] = useState<LeaderboardConfig>({
     columns: ["Name"],
   });
+  const [currGroup, setCurrGroup] = useState<GroupedData>({});
   const [newColumn, setNewColumn] = useState("");
   const [valueAlice, setValueAlice] = useState("");
   const [valueBob, setValueBob] = useState("");
@@ -39,6 +39,27 @@ export default function Home() {
   const [isOpenConfig, setIsOpenConfig] = useState(false);
   const [selectedConfigValue, setSelectedConfigValue] = useState("");
 
+  const clearValues = () => {
+    setRaceDisplayValue("--Select--");
+    setSelectedValue("");
+    setSelectedConfigValue("--Select--");
+    setNewColumn("");
+    setValueAlice("");
+    setValueBob("");
+    setValueJohn("");
+  };
+
+  const updateData = () => {
+    const groupedData: GroupedData = {};
+    data.forEach((entry) => {
+      const { tableId, ...properties } = entry;
+      if (!groupedData[tableId]) {
+        groupedData[tableId] = [];
+      }
+      groupedData[tableId].push(properties);
+    });
+    setCurrGroup(groupedData);
+  };
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
   };
@@ -64,23 +85,20 @@ export default function Home() {
 
   const handleAddColumn = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    if (config.columns.includes(newColumn)) {
-      setNewColumn("");
-      setValueAlice("");
-      setValueBob("");
-      setValueJohn("");
+
+    if (config.columns.some(column => column.toLowerCase() === newColumn.toLowerCase())) {
+      clearValues();
       alert("Column already exists");
       return; // Prevent further execution
     }
-    if (!newColumn){
-      setNewColumn("");
-      setValueAlice("");
-      setValueBob("");
-      setValueJohn("");
+
+    if (!newColumn) {
+      clearValues();
       alert("Column cannot be empty");
       return;
     }
     const newColumns = [...config.columns, newColumn];
+
     setConfig({
       ...config,
       columns: newColumns,
@@ -96,20 +114,15 @@ export default function Home() {
       }
     });
 
+    updateData();
     console.log(data);
-    setNewColumn("");
-    setValueAlice("");
-    setValueBob("");
-    setValueJohn("");
+    clearValues();
   };
 
   const handleRemoveColumn = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     if (newColumn == "Name") {
-      setNewColumn("");
-      setValueAlice("");
-      setValueBob("");
-      setValueJohn("");
+      clearValues();
       alert("Unable to remove this column");
       return; // Prevent further execution
     }
@@ -126,100 +139,75 @@ export default function Home() {
         columns: updatedColumns,
       });
     } else {
-      alert("Column not found. Please enter a valid column name.");
+      alert("Column 'Name' cannot be removed. Please enter a valid column name.");
     }
+    updateData();
+    clearValues();
+  };
 
-    setNewColumn("");
-    setValueAlice("");
-    setValueBob("");
-    setValueJohn("");
+  const handleSaveToDB = (e: React.FocusEvent<HTMLFormElement>) => {
+    e.preventDefault();
   };
 
   const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     // Check if newColumn already exists
 
-    if (!selectedValue){
-      setNewColumn("");
-      setValueAlice("");
-      setValueBob("");
-      setValueJohn("");
-      alert("Please select the current race round.")
+    if (!selectedValue) {
+      alert("Please select the current race round.");
+      clearValues();
       return;
     }
 
-    if (config.columns.length === 1){
-      setNewColumn("");
-      setValueAlice("");
-      setValueBob("");
-      setValueJohn("");
+    if (config.columns.length === 1) {
       alert("You do not have a column available, please create one");
+      clearValues();
+      return;
+    }
+    console.log(selectedConfigValue);
+
+    if (selectedConfigValue !== "--Select--") {
+      alert("Please select a column.");
+      clearValues();
       return;
     }
 
-    if (!selectedConfigValue){
-      setNewColumn("");
-      setValueAlice("");
-      setValueBob("");
-      setValueJohn("");
-      alert("Please select a column. If there ")
-      return;
+    if (valueAlice) {
+      if (!Number.isInteger(parseInt(valueAlice))) {
+        alert("Please enter integer value for data.");
+        clearValues();
+        return;
+      }
     }
-
-    // data.forEach((entry) => {
-    //   if (entry.Name === "Alice" && entry.tableId.toString() === selectedConfigValue) {
-    //     if (valueAlice){
-    //       entry[selectedConfigValue] = valueAlice;
-    //     }
-       
-    //   } else if (entry.Name === "Bob" && entry.tableId.toString()  === selectedConfigValue) {
-    //     if (valueBob){
-    //       entry[selectedConfigValue] = valueBob;
-    //     }
-
-    //   } else if (entry.Name === "John" && entry.tableId.toString()  === selectedConfigValue) {
-    //     if (valueJohn){
-    //       entry[selectedConfigValue] = valueJohn;
-    //     }
-    //   }
-    // });
-
-    // data.forEach((entry) => {
-    //   if (entry.tableId.toString() === selectedConfigValue) {
-    //     if (entry.Name === "Alice") {
-    //       if (valueAlice) {
-    //         entry[selectedConfigValue] = valueAlice;
-    //       }
-    //     } else if (entry.Name === "Bob") {
-    //       if (valueBob) {
-    //         entry[selectedConfigValue] = valueBob;
-    //       }
-    //     } else if (entry.Name === "John") {
-    //       if (valueJohn) {
-    //         entry[selectedConfigValue] = valueJohn;
-    //       }
-    //     }
-    //   }
-    // });
 
     data.forEach((entry) => {
-      if (entry.tableId.toString() === selectedConfigValue) {
-        if (entry.Name === "Alice" && typeof valueAlice !== "undefined") {
+      if (entry.tableId.toString() === selectedValue) {
+        if (
+          entry.Name === "Alice" &&
+          typeof valueAlice !== "undefined" &&
+          valueAlice
+        ) {
           entry[selectedConfigValue] = valueAlice;
-        } else if (entry.Name === "Bob" && typeof valueBob !== "undefined") {
+        } else if (
+          entry.Name === "Bob" &&
+          typeof valueBob !== "undefined" &&
+          valueBob
+        ) {
           entry[selectedConfigValue] = valueBob;
-        } else if (entry.Name === "John" && typeof valueJohn !== "undefined") {
+        } else if (
+          entry.Name === "John" &&
+          typeof valueJohn !== "undefined" &&
+          valueJohn
+        ) {
           entry[selectedConfigValue] = valueJohn;
         }
       }
     });
+
+    updateData();
     console.log(data);
 
-    setSelectedValue("--Select--")
-    setNewColumn("");
-    setValueAlice("");
-    setValueBob("");
-    setValueJohn("");
+    clearValues();
   };
 
   return (
@@ -300,8 +288,9 @@ export default function Home() {
                     </button>
                   </div>
                 </form>
+
                 <form
-                  className="rounded-md border-indigo-500/100 shadow-2xl w-72 border-2 "
+                  className="mt-4 rounded-md border-indigo-500/100 shadow-2xl w-72 border-2 "
                   onSubmit={handleFormSubmit}
                 >
                   <div className="ml-3 mt-2">
@@ -405,18 +394,19 @@ export default function Home() {
                         className="absolute z-10 bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700 mt-1 overflow-y-auto max-h-40"
                       >
                         <ul className="py-2 text-sm text-gray-700 dark:text-gray-200">
-                          {config.columns.map((option, index) => (
-                           option !== "Name" && (
-                            <li key={index}>
-                              <div
-                                className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white cursor-pointer"
-                                onClick={() => handleConfigClick(option)}
-                              >
-                                {option}
-                              </div>
-                            </li>
-                          )
-                          ))}
+                          {config.columns.map(
+                            (option, index) =>
+                              option !== "Name" && (
+                                <li key={index}>
+                                  <div
+                                    className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white cursor-pointer"
+                                    onClick={() => handleConfigClick(option)}
+                                  >
+                                    {option}
+                                  </div>
+                                </li>
+                              )
+                          )}
                         </ul>
                       </div>
                     )}
@@ -454,7 +444,7 @@ export default function Home() {
                   </div>
 
                   <div className="flex justify-end">
-                  <button
+                    <button
                       className="flex-shrink-0 ml-8 mr-3 mb-5 mt-2 flex items-center justify-center focus:outline-none text-white bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:ring-purple-300 font-medium rounded-lg text-sm px-6 py-2.5 mb-2 dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-900"
                       type="submit"
                     >
@@ -476,10 +466,49 @@ export default function Home() {
                     </button>
                   </div>
                 </form>
+
+                <form
+                  className="mt-4 rounded-md border-indigo-500/100 shadow-2xl w-72 border-2"
+                  onSubmit={handleSaveToDB}
+                >
+                  <div className="ml-3 mt-2">
+                    <label className="font-sans text-m">
+                      Filter Result By:
+                    </label>
+                  </div>
+                </form>
               </div>
             </div>
             <div className={homeStyles.flexChild}>
-              <LeaderboardTable config={config} data={data} title={"Race 1"} currentId={selectedValue} />
+              <div>
+                <LeaderboardTable
+                  config={config}
+                  data={
+                    currGroup[1] == null
+                      ? [{ Name: "Alice" }, { Name: "Bob" }, { Name: "John" }]
+                      : currGroup[1]
+                  }
+                  title={"Race 1"}
+                />
+                <LeaderboardTable
+                  config={config}
+                  data={
+                    currGroup[1] == null
+                      ? [{ Name: "Alice" }, { Name: "Bob" }, { Name: "John" }]
+                      : currGroup[2]
+                  }
+                  title={"Race 2"}
+                />
+                <LeaderboardTable
+                  config={config}
+                  data={
+                    currGroup[1] == null
+                      ? [{ Name: "Alice" }, { Name: "Bob" }, { Name: "John" }]
+                      : currGroup[3]
+                  }
+                  title={"Race 3"}
+                />
+              </div>
             </div>
           </div>
         </div>
