@@ -12,19 +12,6 @@ import { updateColumnData } from "@/request/updateColumnData";
 interface GroupedData {
   [key: string]: any[];
 }
-const tableCount = 2; // Number of tables
-const names = ["Alice", "Bob", "John"]; // Names for each entry
-// const data: RaceEntry[] = [];
-let idCounter = 1;
-// for (let i = 0; i <= tableCount; i++) {
-//   for (let j = 0; j < names.length; j++) {
-//     // const uniqueId = `entry_${idCounter}`;
-//     data.push({
-//       tableId: i,
-//       Name: names[j],
-//     });
-//   }
-// }
 
 export default function Home() {
   const [data, setData] = useState<RaceEntry[]>([]);
@@ -267,10 +254,21 @@ export default function Home() {
 
   const handleGenerateResult = (e: React.FocusEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log(textValue)
+    console.log(textValue);
+    let checkingArr = config.columns.filter(column => column !== "name");
+    // let splitText = textValue.split(",").filter(value => value !== "");
+    let splitText = textValue.split(",").filter(value => value !== "").map(value => value.trim().replace(/(asc|desc)$/i, ''));
+    let filterSpace = splitText.map(value => value.trim()).filter(value => value !== '');
+    for (let i = 0; i < filterSpace.length; i ++){
+      let checkColVal = filterSpace[i]
+      console.log(checkColVal)
+    }
+    // console.log(checkingArr)
   };
 
-  const handleFilterChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleFilterChange = (
+    event: React.ChangeEvent<HTMLTextAreaElement>
+  ) => {
     setTextValue(event.target.value);
   };
 
@@ -335,9 +333,7 @@ export default function Home() {
       }
     }
 
-
     data.forEach((entry) => {
-      console.log(entry);
       if (entry.raceId.toString() === selectedValue) {
         if (
           entry.name === "Alice" &&
@@ -365,8 +361,6 @@ export default function Home() {
     });
 
     updateData(data);
-    console.log(data);
-
     clearValues();
   };
 

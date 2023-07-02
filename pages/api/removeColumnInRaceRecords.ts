@@ -1,12 +1,13 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { Prisma, PrismaClient } from '@prisma/client';
-import { Sql } from '@prisma/client/runtime/library';
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
-interface RaceData {
-    id: number;
-    name: string;
-  }
+
+/**
+ * This function removes the specified column from the `RaceRecords` table.
+ * @param  {NextApiRequest} req
+ * @param  {NextApiResponse} res
+ */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const { columnName, columnType } = req.body;
@@ -14,7 +15,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
    // Remove column query
     await prisma.$executeRawUnsafe(`ALTER TABLE "public"."RaceRecords" DROP COLUMN "${columnName}"`)
 
-    console.log('Column Removed');
     res.status(200).end();
   } catch (error) {
     res.status(500).json({ error: 'Error removing column' });

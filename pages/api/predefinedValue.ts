@@ -1,12 +1,17 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { Prisma, PrismaClient } from "@prisma/client";
-import { Sql } from "@prisma/client/runtime/library";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
-interface RaceData {
-  id: number;
-  name: string;
-}
+
+/**
+ * This function creates predefined users, races, and race records in the database.
+ * The function first creates an array of predefined users, races, and race records. 
+ * Then, it uses the `prisma.users.createMany()`, `prisma.race.createMany()`, and 
+ * `prisma.raceRecords.createMany()` methods to create the data in the database. 
+ * Finally, the function disconnects from Prisma.
+ * @param  {NextApiRequest} req
+ * @param  {NextApiResponse} res
+ */
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -42,9 +47,9 @@ export default async function handler(
       skipDuplicates: true,
     });
     await prisma.race.createMany({
-        data: predefinedRace,
-        skipDuplicates: true,
-      });
+      data: predefinedRace,
+      skipDuplicates: true,
+    });
     await prisma.raceRecords.createMany({
       data: predefinedRecords,
       skipDuplicates: true,

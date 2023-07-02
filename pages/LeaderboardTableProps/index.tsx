@@ -42,16 +42,6 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
             </tr>
           </thead>
           <tbody>
-            {/* {data &&
-              data.map((entry, index) => (
-                <tr key={index} className={homeStyles.row}>
-                  {columns.map((column) => (
-                    <td className="border px-8 py-4" key={column}>
-                      {entry[column]}
-                    </td>
-                  ))}
-                </tr>
-              ))} */}
             {rowData &&
               rowData.map((entry, index) => (
                 <tr key={index} className={homeStyles.row}>

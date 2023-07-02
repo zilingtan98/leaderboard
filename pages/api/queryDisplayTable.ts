@@ -3,6 +3,11 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+/**
+ * This function queries the `RaceRecords` and `Users` tables and returns the results in a JSON format.
+ * @param  {NextApiRequest} req
+ * @param  {NextApiResponse} res
+ */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
 
