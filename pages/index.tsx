@@ -43,6 +43,7 @@ export default function Home() {
   const [isOpenConfig, setIsOpenConfig] = useState(false);
   const [selectedConfigValue, setSelectedConfigValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [textValue, setTextValue] = useState("");
 
   const clearValues = () => {
     setRaceDisplayValue("--Select--");
@@ -52,6 +53,7 @@ export default function Home() {
     setValueAlice("");
     setValueBob("");
     setValueJohn("");
+    setTextValue("");
   };
 
   const reloadData = () => {
@@ -67,7 +69,9 @@ export default function Home() {
         );
 
         setConfig((prevConfig) => {
-          const newColumns = keysArray.filter((key) => !prevConfig.columns.includes(key));
+          const newColumns = keysArray.filter(
+            (key) => !prevConfig.columns.includes(key)
+          );
           return {
             ...prevConfig,
             columns: [...prevConfig.columns, ...newColumns],
@@ -95,7 +99,9 @@ export default function Home() {
           (key) => !excludedProperties.includes(key)
         );
         setConfig((prevConfig) => {
-          const newColumns = keysArray.filter((key) => !prevConfig.columns.includes(key));
+          const newColumns = keysArray.filter(
+            (key) => !prevConfig.columns.includes(key)
+          );
           return {
             ...prevConfig,
             columns: [...prevConfig.columns, ...newColumns],
@@ -113,7 +119,7 @@ export default function Home() {
     reloadData();
   }, []);
 
-  const updateData = (data) => {
+  const updateData = (data: any) => {
     // const groupedData: GroupedData = {};
     // data.forEach((entry) => {
     //   const { raceId, ...properties } = entry;
@@ -123,15 +129,18 @@ export default function Home() {
     //   groupedData[raceId].push(properties);
     // });
     // setCurrGroup(groupedData);
-    const groupedData: GroupedData = data.reduce((acc: GroupedData, entry: RaceEntry) => {
-      const { raceId, ...properties } = entry;
-      if (!acc[raceId]) {
-        acc[raceId] = [];
-      }
-      acc[raceId].push(properties);
-      return acc;
-    }, {});
-    
+    const groupedData: GroupedData = data.reduce(
+      (acc: GroupedData, entry: RaceEntry) => {
+        const { raceId, ...properties } = entry;
+        if (!acc[raceId]) {
+          acc[raceId] = [];
+        }
+        acc[raceId].push(properties);
+        return acc;
+      },
+      {}
+    );
+
     setCurrGroup(groupedData);
   };
 
@@ -256,8 +265,13 @@ export default function Home() {
       });
   };
 
-  const handleSaveToDB = (e: React.FocusEvent<HTMLFormElement>) => {
+  const handleGenerateResult = (e: React.FocusEvent<HTMLFormElement>) => {
     e.preventDefault();
+    console.log(textValue)
+  };
+
+  const handleFilterChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setTextValue(event.target.value);
   };
 
   const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -288,10 +302,42 @@ export default function Home() {
         clearValues();
         return;
       }
+      if (parseInt(valueAlice) < 0) {
+        alert("Input data cannot be negative value");
+        clearValues();
+        return;
+      }
     }
 
+    if (valueBob) {
+      if (!Number.isInteger(parseInt(valueBob))) {
+        alert("Please enter integer value for data.");
+        clearValues();
+        return;
+      }
+      if (parseInt(valueBob) < 0) {
+        alert("Input data cannot be negative value");
+        clearValues();
+        return;
+      }
+    }
+
+    if (valueJohn) {
+      if (!Number.isInteger(parseInt(valueJohn))) {
+        alert("Please enter integer value for data.");
+        clearValues();
+        return;
+      }
+      if (parseInt(valueJohn) < 0) {
+        alert("Input data cannot be negative value");
+        clearValues();
+        return;
+      }
+    }
+
+
     data.forEach((entry) => {
-      console.log(entry)
+      console.log(entry);
       if (entry.raceId.toString() === selectedValue) {
         if (
           entry.name === "Alice" &&
@@ -339,7 +385,8 @@ export default function Home() {
               <div>
                 <button
                   className="focus:outline-none text-white bg-yellow-400 hover:bg-yellow-500 focus:ring-4 focus:ring-yellow-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:focus:ring-yellow-900"
-                  onClick={reloadData} hidden
+                  onClick={reloadData}
+                  hidden
                 >
                   Load From Database
                 </button>
@@ -590,13 +637,49 @@ export default function Home() {
                   Filter and Generate Race Result
                 </h2>
                 <form
-                  className="mt-4 rounded-md border-indigo-500/100 shadow-2xl w-72 border-2"
-                  onSubmit={handleSaveToDB}
+                  className="mt-4 mb-12 rounded-md border-indigo-500/100 shadow-2xl w-72 border-2"
+                  onSubmit={handleGenerateResult}
                 >
                   <div className="ml-3 mt-2">
                     <label className="font-sans text-m">
                       Filter Result By:
                     </label>
+                    <br></br>
+                    <span className="font-sans text-sm italic">
+                      Example: "Column Name 1 ASC, Column Name 2 DESC"
+                    </span>
+                  </div>
+                  <div className="mt-2">
+                    <textarea
+                      id="message"
+                      rows={8}
+                      value={textValue}
+                      onChange={handleFilterChange}
+                      className="m-3 block p-2.5 w-11/12 text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                      placeholder="Write your filter here..."
+                    ></textarea>
+                  </div>
+                  <div className="flex justify-end">
+                    <button
+                      className="flex-shrink-0 ml-8 mr-3 mb-5 mt-2 flex items-center justify-center focus:outline-none text-white bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:ring-purple-300 font-medium rounded-lg text-sm px-6 py-2.5 mb-2 dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-900"
+                      type="submit"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={1.5}
+                        stroke="currentColor"
+                        className="w-6 h-6 mr-2"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M12 4.5v15m7.5-7.5h-15"
+                        />
+                      </svg>
+                      <span>Generate Results</span>
+                    </button>
                   </div>
                 </form>
               </div>
