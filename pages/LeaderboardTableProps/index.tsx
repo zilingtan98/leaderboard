@@ -21,7 +21,7 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
   title,
 }) => {
   const { columns } = config;
-
+  const rowData = data;
   return (
     <div className={homeStyles.tableAlign}>
       <h2 className="mb-4 text-xl font-extrabold leading-none tracking-tight text-gray-900 dark:text-white">
@@ -41,31 +41,19 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
               ))}
             </tr>
           </thead>
-          {/* <tbody>
-          {data.map((entry, index) => (
-            <tr key={index}>
-              {columns.map((column) => (
-                <td className="border px-8 py-4" key={column}>
-                  {(entry as any)[column]}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody> */}
-          {/* <tbody>
-            {data.map((entry, index) => (
-              <tr key={index} className={homeStyles.row}>
-                {columns.map((column) => (
-                  <td className="border px-8 py-4" key={column}>
-                    {entry[column]}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody> */}
           <tbody>
-            {data &&
+            {/* {data &&
               data.map((entry, index) => (
+                <tr key={index} className={homeStyles.row}>
+                  {columns.map((column) => (
+                    <td className="border px-8 py-4" key={column}>
+                      {entry[column]}
+                    </td>
+                  ))}
+                </tr>
+              ))} */}
+            {rowData &&
+              rowData.map((entry, index) => (
                 <tr key={index} className={homeStyles.row}>
                   {columns.map((column) => (
                     <td className="border px-8 py-4" key={column}>

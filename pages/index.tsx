@@ -7,26 +7,29 @@ import homeStyles from "@/styles/Table.module.css";
 import { addColumn } from "@/request/addColumn";
 import { removeColumn } from "@/request/removeColumn";
 import { predefined } from "@/request/predefined";
+import { queryDisplayTable } from "@/request/queryDisplayTable";
+import { updateColumnData } from "@/request/updateColumnData";
 interface GroupedData {
   [key: string]: any[];
 }
 const tableCount = 2; // Number of tables
 const names = ["Alice", "Bob", "John"]; // Names for each entry
-const data: RaceEntry[] = [];
+// const data: RaceEntry[] = [];
 let idCounter = 1;
-for (let i = 0; i <= tableCount; i++) {
-  for (let j = 0; j < names.length; j++) {
-    // const uniqueId = `entry_${idCounter}`;
-    data.push({
-      tableId: i,
-      Name: names[j],
-    });
-  }
-}
+// for (let i = 0; i <= tableCount; i++) {
+//   for (let j = 0; j < names.length; j++) {
+//     // const uniqueId = `entry_${idCounter}`;
+//     data.push({
+//       tableId: i,
+//       Name: names[j],
+//     });
+//   }
+// }
 
 export default function Home() {
+  const [data, setData] = useState<RaceEntry[]>([]);
   const [config, setConfig] = useState<LeaderboardConfig>({
-    columns: ["Name"],
+    columns: ["name"],
   });
   const [currGroup, setCurrGroup] = useState<GroupedData>({});
   const [newColumn, setNewColumn] = useState("");
@@ -39,7 +42,8 @@ export default function Home() {
   const [raceDisplayValue, setRaceDisplayValue] = useState("");
   const [isOpenConfig, setIsOpenConfig] = useState(false);
   const [selectedConfigValue, setSelectedConfigValue] = useState("");
-  
+  const [isLoading, setIsLoading] = useState(false);
+
   const clearValues = () => {
     setRaceDisplayValue("--Select--");
     setSelectedValue("");
@@ -49,21 +53,88 @@ export default function Home() {
     setValueBob("");
     setValueJohn("");
   };
+
+  const reloadData = () => {
+    setIsLoading(true);
+    queryDisplayTable()
+      .then((data) => {
+        setData(data);
+        setIsLoading(false);
+        // Handle the response data
+        const excludedProperties = ["id", "raceId", "userId"];
+        const keysArray = Object.keys(data[0]).filter(
+          (key) => !excludedProperties.includes(key)
+        );
+
+        setConfig((prevConfig) => {
+          const newColumns = keysArray.filter((key) => !prevConfig.columns.includes(key));
+          return {
+            ...prevConfig,
+            columns: [...prevConfig.columns, ...newColumns],
+          };
+        });
+        updateData(setConfig);
+      })
+
+      .catch((error) => {
+        console.error("Error:", error);
+        setIsLoading(false);
+        // Handle the error
+      });
+  };
+
   useEffect(() => {
     predefined();
+    queryDisplayTable()
+      .then((resdata) => {
+        setData(resdata);
+        setIsLoading(false);
+        // Handle the response data
+        const excludedProperties = ["id", "raceId", "userId"];
+        const keysArray = Object.keys(resdata[0]).filter(
+          (key) => !excludedProperties.includes(key)
+        );
+        setConfig((prevConfig) => {
+          const newColumns = keysArray.filter((key) => !prevConfig.columns.includes(key));
+          return {
+            ...prevConfig,
+            columns: [...prevConfig.columns, ...newColumns],
+          };
+        });
+        // console.log(resdata);
+        updateData(resdata);
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        setIsLoading(false);
+        // Handle the error
+      });
+    // updateData();
+    reloadData();
   }, []);
-  const updateData = () => {
-    const groupedData: GroupedData = {};
-    data.forEach((entry) => {
-      const { tableId, ...properties } = entry;
-      if (!groupedData[tableId]) {
-        groupedData[tableId] = [];
+
+  const updateData = (data) => {
+    // const groupedData: GroupedData = {};
+    // data.forEach((entry) => {
+    //   const { raceId, ...properties } = entry;
+    //   if (!groupedData[raceId]) {
+    //     groupedData[raceId] = [];
+    //   }
+    //   groupedData[raceId].push(properties);
+    // });
+    // setCurrGroup(groupedData);
+    const groupedData: GroupedData = data.reduce((acc: GroupedData, entry: RaceEntry) => {
+      const { raceId, ...properties } = entry;
+      if (!acc[raceId]) {
+        acc[raceId] = [];
       }
-      groupedData[tableId].push(properties);
-    });
+      acc[raceId].push(properties);
+      return acc;
+    }, {});
+    
     setCurrGroup(groupedData);
-    console.log(groupedData);
   };
+
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
   };
@@ -120,22 +191,25 @@ export default function Home() {
     });
 
     data.forEach((entry) => {
-      if (entry.Name === "Alice") {
+      if (entry.name === "Alice") {
         entry[newColumn] = 0;
-      } else if (entry.Name === "Bob") {
+      } else if (entry.name === "Bob") {
         entry[newColumn] = 0;
-      } else if (entry.Name === "John") {
+      } else if (entry.name === "John") {
         entry[newColumn] = 0;
       }
     });
 
-    updateData();
+    updateData(data);
     console.log(data);
     clearValues();
 
     addColumn(newColumn)
       .then((data) => {
         console.log("Response data:", data);
+        queryDisplayTable().then((res) => {
+          setData(res);
+        });
         // Handle the response data
       })
       .catch((error) => {
@@ -168,19 +242,18 @@ export default function Home() {
         "Column 'Name' cannot be removed. Please enter a valid column name."
       );
     }
-    updateData();
+    updateData(data);
     clearValues();
 
     removeColumn(newColumn)
-    .then((data) => {
-      console.log("Response data:", data);
-      // Handle the response data
-    })
-    .catch((error) => {
-      console.error("Error:", error);
-      // Handle the error
-    });
-
+      .then((data) => {
+        console.log("Response data:", data);
+        // Handle the response data
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        // Handle the error
+      });
   };
 
   const handleSaveToDB = (e: React.FocusEvent<HTMLFormElement>) => {
@@ -202,7 +275,6 @@ export default function Home() {
       clearValues();
       return;
     }
-    console.log(selectedConfigValue);
 
     if (selectedConfigValue == "--Select--") {
       alert("Please select a column.");
@@ -219,30 +291,34 @@ export default function Home() {
     }
 
     data.forEach((entry) => {
-      if (entry.tableId.toString() === selectedValue) {
+      console.log(entry)
+      if (entry.raceId.toString() === selectedValue) {
         if (
-          entry.Name === "Alice" &&
+          entry.name === "Alice" &&
           typeof valueAlice !== "undefined" &&
           valueAlice
         ) {
           entry[selectedConfigValue] = valueAlice;
+          updateColumnData(selectedConfigValue, selectedValue, 0, valueAlice);
         } else if (
-          entry.Name === "Bob" &&
+          entry.name === "Bob" &&
           typeof valueBob !== "undefined" &&
           valueBob
         ) {
           entry[selectedConfigValue] = valueBob;
+          updateColumnData(selectedConfigValue, selectedValue, 1, valueBob);
         } else if (
-          entry.Name === "John" &&
+          entry.name === "John" &&
           typeof valueJohn !== "undefined" &&
           valueJohn
         ) {
           entry[selectedConfigValue] = valueJohn;
+          updateColumnData(selectedConfigValue, selectedValue, 2, valueJohn);
         }
       }
     });
 
-    updateData();
+    updateData(data);
     console.log(data);
 
     clearValues();
@@ -261,6 +337,12 @@ export default function Home() {
           <div className={homeStyles.flexContainer}>
             <div className={homeStyles.flexChild}>
               <div>
+                <button
+                  className="focus:outline-none text-white bg-yellow-400 hover:bg-yellow-500 focus:ring-4 focus:ring-yellow-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:focus:ring-yellow-900"
+                  onClick={reloadData} hidden
+                >
+                  Load From Database
+                </button>
                 <h2 className="mb-4 text-xl font-extrabold leading-none tracking-tight text-gray-900 dark:text-white">
                   Toggle Items For Current Race
                 </h2>
@@ -434,7 +516,7 @@ export default function Home() {
                         <ul className="py-2 text-sm text-gray-700 dark:text-gray-200">
                           {config.columns.map(
                             (option, index) =>
-                              option !== "Name" && (
+                              option !== "name" && (
                                 <li key={index}>
                                   <div
                                     className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white cursor-pointer"
@@ -521,33 +603,25 @@ export default function Home() {
             </div>
             <div className={homeStyles.flexChild}>
               <div>
-                <LeaderboardTable
-                  config={config}
-                  data={
-                    currGroup[0] == null
-                      ? [{ Name: "Alice" }, { Name: "Bob" }, { Name: "John" }]
-                      : currGroup[0]
-                  }
-                  title={"Race 1"}
-                />
-                <LeaderboardTable
-                  config={config}
-                  data={
-                    currGroup[1] == null
-                      ? [{ Name: "Alice" }, { Name: "Bob" }, { Name: "John" }]
-                      : currGroup[1]
-                  }
-                  title={"Race 2"}
-                />
-                <LeaderboardTable
-                  config={config}
-                  data={
-                    currGroup[2] == null
-                      ? [{ Name: "Alice" }, { Name: "Bob" }, { Name: "John" }]
-                      : currGroup[2]
-                  }
-                  title={"Race 3"}
-                />
+                {data.length > 0 && (
+                  <>
+                    <LeaderboardTable
+                      config={config}
+                      data={currGroup[0]}
+                      title={"Race 1"}
+                    />
+                    <LeaderboardTable
+                      config={config}
+                      data={currGroup[1]}
+                      title={"Race 2"}
+                    />
+                    <LeaderboardTable
+                      config={config}
+                      data={currGroup[2]}
+                      title={"Race 3"}
+                    />
+                  </>
+                )}
               </div>
             </div>
           </div>
