@@ -33,7 +33,7 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
             <tr>
               {columns.map((column) => (
                 <th
-                  className="bg-blue-100 border text-left px-8 py-4"
+                  className="overflow-hidden whitespace-nowrap text-ellipsis max-w-[300px] bg-blue-100 border text-left px-8 py-4"
                   key={column}
                 >
                   {column}

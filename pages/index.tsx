@@ -1,19 +1,20 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import LeaderboardTable, {
   LeaderboardConfig,
   RaceEntry,
 } from "./LeaderboardTableProps";
-
 import homeStyles from "@/styles/Table.module.css";
-
+import { addColumn } from "@/request/addColumn";
+import { removeColumn } from "@/request/removeColumn";
+import { predefined } from "@/request/predefined";
 interface GroupedData {
   [key: string]: any[];
 }
-const tableCount = 3; // Number of tables
+const tableCount = 2; // Number of tables
 const names = ["Alice", "Bob", "John"]; // Names for each entry
 const data: RaceEntry[] = [];
 let idCounter = 1;
-for (let i = 1; i <= tableCount; i++) {
+for (let i = 0; i <= tableCount; i++) {
   for (let j = 0; j < names.length; j++) {
     // const uniqueId = `entry_${idCounter}`;
     data.push({
@@ -38,7 +39,7 @@ export default function Home() {
   const [raceDisplayValue, setRaceDisplayValue] = useState("");
   const [isOpenConfig, setIsOpenConfig] = useState(false);
   const [selectedConfigValue, setSelectedConfigValue] = useState("");
-
+  
   const clearValues = () => {
     setRaceDisplayValue("--Select--");
     setSelectedValue("");
@@ -48,7 +49,9 @@ export default function Home() {
     setValueBob("");
     setValueJohn("");
   };
-
+  useEffect(() => {
+    predefined();
+  }, []);
   const updateData = () => {
     const groupedData: GroupedData = {};
     data.forEach((entry) => {
@@ -59,6 +62,7 @@ export default function Home() {
       groupedData[tableId].push(properties);
     });
     setCurrGroup(groupedData);
+    console.log(groupedData);
   };
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
@@ -78,7 +82,14 @@ export default function Home() {
   };
 
   const handleItemClick = (value: React.SetStateAction<string>) => {
-    setRaceDisplayValue("Race " + value);
+    if (value == "0") {
+      setRaceDisplayValue("Race 1");
+    } else if (value == "1") {
+      setRaceDisplayValue("Race 2");
+    } else if (value == "2") {
+      setRaceDisplayValue("Race 3");
+    }
+
     setSelectedValue(value);
     setIsOpen(false);
   };
@@ -86,7 +97,11 @@ export default function Home() {
   const handleAddColumn = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
 
-    if (config.columns.some(column => column.toLowerCase() === newColumn.toLowerCase())) {
+    if (
+      config.columns.some(
+        (column) => column.toLowerCase() === newColumn.toLowerCase()
+      )
+    ) {
       clearValues();
       alert("Column already exists");
       return; // Prevent further execution
@@ -117,6 +132,16 @@ export default function Home() {
     updateData();
     console.log(data);
     clearValues();
+
+    addColumn(newColumn)
+      .then((data) => {
+        console.log("Response data:", data);
+        // Handle the response data
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        // Handle the error
+      });
   };
 
   const handleRemoveColumn = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -139,10 +164,23 @@ export default function Home() {
         columns: updatedColumns,
       });
     } else {
-      alert("Column 'Name' cannot be removed. Please enter a valid column name.");
+      alert(
+        "Column 'Name' cannot be removed. Please enter a valid column name."
+      );
     }
     updateData();
     clearValues();
+
+    removeColumn(newColumn)
+    .then((data) => {
+      console.log("Response data:", data);
+      // Handle the response data
+    })
+    .catch((error) => {
+      console.error("Error:", error);
+      // Handle the error
+    });
+
   };
 
   const handleSaveToDB = (e: React.FocusEvent<HTMLFormElement>) => {
@@ -166,7 +204,7 @@ export default function Home() {
     }
     console.log(selectedConfigValue);
 
-    if (selectedConfigValue !== "--Select--") {
+    if (selectedConfigValue == "--Select--") {
       alert("Please select a column.");
       clearValues();
       return;
@@ -334,7 +372,7 @@ export default function Home() {
                           <li>
                             <div
                               className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white cursor-pointer"
-                              onClick={() => handleItemClick("1")}
+                              onClick={() => handleItemClick("0")}
                             >
                               Race 1
                             </div>
@@ -342,7 +380,7 @@ export default function Home() {
                           <li>
                             <div
                               className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white cursor-pointer"
-                              onClick={() => handleItemClick("2")}
+                              onClick={() => handleItemClick("1")}
                             >
                               Race 2
                             </div>
@@ -350,7 +388,7 @@ export default function Home() {
                           <li>
                             <div
                               className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white cursor-pointer"
-                              onClick={() => handleItemClick("3")}
+                              onClick={() => handleItemClick("2")}
                             >
                               Race 3
                             </div>
@@ -466,7 +504,9 @@ export default function Home() {
                     </button>
                   </div>
                 </form>
-
+                <h2 className="mb-4 mt-6 text-xl font-extrabold leading-none tracking-tight text-gray-900 dark:text-white">
+                  Filter and Generate Race Result
+                </h2>
                 <form
                   className="mt-4 rounded-md border-indigo-500/100 shadow-2xl w-72 border-2"
                   onSubmit={handleSaveToDB}
@@ -484,9 +524,9 @@ export default function Home() {
                 <LeaderboardTable
                   config={config}
                   data={
-                    currGroup[1] == null
+                    currGroup[0] == null
                       ? [{ Name: "Alice" }, { Name: "Bob" }, { Name: "John" }]
-                      : currGroup[1]
+                      : currGroup[0]
                   }
                   title={"Race 1"}
                 />
@@ -495,16 +535,16 @@ export default function Home() {
                   data={
                     currGroup[1] == null
                       ? [{ Name: "Alice" }, { Name: "Bob" }, { Name: "John" }]
-                      : currGroup[2]
+                      : currGroup[1]
                   }
                   title={"Race 2"}
                 />
                 <LeaderboardTable
                   config={config}
                   data={
-                    currGroup[1] == null
+                    currGroup[2] == null
                       ? [{ Name: "Alice" }, { Name: "Bob" }, { Name: "John" }]
-                      : currGroup[3]
+                      : currGroup[2]
                   }
                   title={"Race 3"}
                 />

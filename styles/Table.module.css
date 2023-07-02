@@ -28,8 +28,8 @@
 
 /* Table.module.css */
 
-.row:nth-child(-n+3) {
-    background-color: rgb(216, 218, 193);
+/* .row:nth-child(-n+3) {
+    background-color: rgb(148, 176, 189);
   }
   
   .row:nth-child(n+4):nth-child(-n+6) {
@@ -38,5 +38,5 @@
   
   .row:nth-child(n+7):nth-child(-n+9) {
     background-color: rgb(148, 176, 189);
-  }
+  } */
   
