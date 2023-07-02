@@ -9,6 +9,7 @@ import { removeColumn } from "@/request/removeColumn";
 import { predefined } from "@/request/predefined";
 import { queryDisplayTable } from "@/request/queryDisplayTable";
 import { updateColumnData } from "@/request/updateColumnData";
+import { queryRaceRank } from "@/request/queryRaceRank";
 interface GroupedData {
   [key: string]: any[];
 }
@@ -31,6 +32,10 @@ export default function Home() {
   const [selectedConfigValue, setSelectedConfigValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [textValue, setTextValue] = useState("");
+  const [resultHeader, setResultHeader] = useState<LeaderboardConfig>({
+    columns: ["Rank","name"],
+  });
+  const [resultData, setResultData] = useState<RaceEntry[]>([]);
 
   const clearValues = () => {
     setRaceDisplayValue("--Select--");
@@ -254,18 +259,65 @@ export default function Home() {
 
   const handleGenerateResult = (e: React.FocusEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log(textValue);
-    let checkingArr = config.columns.filter(column => column !== "name");
-    // let splitText = textValue.split(",").filter(value => value !== "");
-    let splitText = textValue.split(",").filter(value => value !== "").map(value => value.trim().replace(/(asc|desc)$/i, ''));
-    let filterSpace = splitText.map(value => value.trim()).filter(value => value !== '');
-    for (let i = 0; i < filterSpace.length; i ++){
-      let checkColVal = filterSpace[i]
-      console.log(checkColVal)
-    }
-    // console.log(checkingArr)
-  };
+    let checkingArr = config.columns.filter((column) => column !== "name");
 
+    let splitText = textValue
+      .split(",")
+      .filter((value) => value !== "")
+      .map((value) => value.trim().replace(/(asc|desc)$/i, ""));
+
+    let filterSpace = splitText
+      .map((value) => value.trim())
+      .filter((value) => value !== "");
+
+    let orderTextArr = textValue.split(",").map((value) => {
+      let trimmedValue = value.trim();
+      if (trimmedValue.toLowerCase().endsWith("asc")) {
+        return "asc";
+      } else if (trimmedValue.toLowerCase().endsWith("desc")) {
+        return "desc";
+      } else {
+        return "";
+      }
+    });
+
+    for (let i = 0; i < filterSpace.length; i++) {
+      let checkColVal = filterSpace[i];
+      if (!checkingArr.includes(checkColVal)) {
+        alert(`${checkColVal} is not a valid column name`);
+        clearValues();
+        return;
+      }
+    }
+
+    queryRaceRank(filterSpace, orderTextArr)
+      .then((res) => {
+        let temp = res
+        const rankedData = temp.map((obj:RaceEntry, index:any) => ({
+          ...obj,
+          Rank: index + 1
+        }));
+        setResultData(rankedData)
+        const keysArray = Object.keys(rankedData[0])
+        console.log(keysArray)
+        setResultHeader((prevConfig) => {
+          const newColumns = keysArray.filter(
+            (key) => !prevConfig.columns.includes(key)
+          );
+          return {
+            ...prevConfig,
+            columns: [...prevConfig.columns, ...newColumns],
+          };
+        });
+
+
+        // Handle the response data
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        // Handle the error
+      });
+  };
   const handleFilterChange = (
     event: React.ChangeEvent<HTMLTextAreaElement>
   ) => {
@@ -636,7 +688,8 @@ export default function Home() {
                 >
                   <div className="ml-3 mt-2">
                     <label className="font-sans text-m">
-                      Filter Result By:
+                      Filter Result By: <br></br>*Highest priority column is
+                      written first
                     </label>
                     <br></br>
                     <span className="font-sans text-sm italic">
@@ -696,6 +749,18 @@ export default function Home() {
                       config={config}
                       data={currGroup[2]}
                       title={"Race 3"}
+                    />
+                  </>
+                )}
+              </div>
+              <div>
+                {resultData.length > 0 && 
+                (
+                  <>
+                  <LeaderboardTable
+                      config={resultHeader}
+                      data={resultData}
+                      title={"Race Result"}
                     />
                   </>
                 )}
